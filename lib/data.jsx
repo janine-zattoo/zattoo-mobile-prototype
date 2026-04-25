@@ -108,12 +108,47 @@ const CONTINUE = [
   { id: 'cw4', title: 'Babylon Berlin', sub: 'S5 · E7 · 25 min left', img: img('photo-1485579149621-3123dd979885', 500, 320), channel: 'ARD', progress: 0.52 },
 ];
 
-const LIVE_NOW = [
-  { id: 'ln1', channel: 'Sky Sport Bundesliga', title: 'Bayern vs. Leipzig', sub: 'LIVE · 2nd half · 1 to 1', img: img('photo-1459865264687-595d652de67e', 500, 320), viewers: '82.1k' },
-  { id: 'ln2', channel: 'Tagesschau 24', title: 'Mittagsmagazin', sub: 'LIVE · 14:00 to 14:45', img: img('photo-1504711434969-e33886168f5c', 500, 320), viewers: '12.4k' },
-  { id: 'ln3', channel: 'arte', title: 'Journal', sub: 'LIVE · 14:30 to 15:00', img: img('photo-1528164344705-47542687000d', 500, 320), viewers: '4.8k' },
-  { id: 'ln4', channel: 'Eurosport 1', title: 'Giro d\'Italia · Stage 17', sub: 'LIVE · Bormio climb', img: img('photo-1517649763962-0c623066013b', 500, 320), viewers: '31.7k' },
-];
+// MIP Live Data adapter — uses real EPG when window.MIP_LIVE_DATA is present
+function _mipFmt(ts) {
+  const d = new Date(ts * 1000);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+const LIVE_NOW = (() => {
+  const fallback = [
+    { id: 'ln1', channel: 'Sky Sport Bundesliga', title: 'Bayern vs. Leipzig', sub: 'LIVE · 2nd half · 1 to 1', img: img('photo-1459865264687-595d652de67e', 500, 320), viewers: '82.1k' },
+    { id: 'ln2', channel: 'Tagesschau 24', title: 'Mittagsmagazin', sub: 'LIVE · 14:00 to 14:45', img: img('photo-1504711434969-e33886168f5c', 500, 320), viewers: '12.4k' },
+    { id: 'ln3', channel: 'arte', title: 'Journal', sub: 'LIVE · 14:30 to 15:00', img: img('photo-1528164344705-47542687000d', 500, 320), viewers: '4.8k' },
+    { id: 'ln4', channel: 'Eurosport 1', title: 'Giro d\'Italia · Stage 17', sub: 'LIVE · Bormio climb', img: img('photo-1517649763962-0c623066013b', 500, 320), viewers: '31.7k' },
+  ];
+  const mip = window.MIP_LIVE_DATA;
+  if (!mip || !mip.guide || !mip.guide.length) return fallback;
+
+  const chMap = Object.fromEntries(mip.channels.map(c => [c.id, c]));
+  const ref   = mip.fetchedAt;
+  const seen  = new Set();
+  const items = [];
+
+  for (const g of mip.guide) {
+    if (!g.program || seen.has(g.channel_id)) continue;
+    if (g.start <= ref && ref < g.start + g.duration) {
+      seen.add(g.channel_id);
+      const ch    = chMap[g.channel_id] || { name: g.channel_id };
+      const trans = g.program.translations?.find(t => t.default) || g.program.translations?.[0] || {};
+      const genre = g.program.genres?.[0] || g.program.kind || '';
+      items.push({
+        id:      `mip_${items.length}`,
+        channel: ch.name,
+        title:   trans.title || '—',
+        sub:     `LIVE · ${_mipFmt(g.start)}–${_mipFmt(g.start + g.duration)}${genre ? ' · ' + genre : ''}`,
+        img:     g.program.image_url || img('photo-1459865264687-595d652de67e', 500, 320),
+        viewers: null,
+      });
+      if (items.length >= 6) break;
+    }
+  }
+  return items.length > 0 ? items : fallback;
+})();
 
 // Channel logo data-URI SVGs — inline, no external hotlink dependency.
 // Each is a square canvas with the channel mark on white.
@@ -169,6 +204,25 @@ const CHANNEL_LOGOS = {
     `<text x="90" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#FFF">L</text>`
   ),
 };
+
+// Auto-generate SVG badge logos for MIP channels not already hand-crafted above
+if (window.MIP_LIVE_DATA) {
+  const _mipPalette = ['#C8102E','#003087','#F58220','#006341','#00539F','#8B0000','#4B0082','#1D6F42','#E30613','#003F7C'];
+  const _mipHash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return Math.abs(h); };
+  window.MIP_LIVE_DATA.channels.forEach(ch => {
+    if (CHANNEL_LOGOS[ch.name]) return;
+    const color  = _mipPalette[_mipHash(ch.stream_provider_channel_id) % _mipPalette.length];
+    const abbr   = ch.name
+      .replace(/\s+(Germany|Austria|Switzerland|UK|France|Italy|FR)\s*$/, '')
+      .split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 3);
+    const fs = abbr.length > 2 ? 28 : 36;
+    const ty = abbr.length > 2 ? 68 : 74;
+    CHANNEL_LOGOS[ch.name] = _svg(
+      `<rect x="8" y="8" width="104" height="104" rx="10" fill="${color}"/>` +
+      `<text x="60" y="${ty}" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="${fs}" fill="#FFF">${abbr}</text>`
+    );
+  });
+}
 
 const _p = (path) => (typeof window !== 'undefined' && window.__urlMap && window.__urlMap[path]) || path;
 
