@@ -99,6 +99,7 @@ function ClipFeed({ accent, variant = 'overlay', onOpenPlayer }) {
             accent={accent}
             variant={variant}
             active={i === idx}
+            muted={muted}
             liked={!!liked[clip.id]}
             onLike={() => setLiked(l => ({ ...l, [clip.id]: !l[clip.id] }))}
             onOpenPlayer={() => onOpenPlayer(clip)}
@@ -109,24 +110,59 @@ function ClipFeed({ accent, variant = 'overlay', onOpenPlayer }) {
   );
 }
 
-function ClipSlide({ clip, accent, variant, active, liked, onLike, onOpenPlayer }) {
+function ClipSlide({ clip, accent, variant, active, muted, liked, onLike, onOpenPlayer }) {
   const isLive = clip.kind === 'LIVE';
+  const videoRef = React.useRef(null);
 
   // variant layouts
   const ctaDocked = variant === 'docked';
   const fullBleed = variant === 'full-bleed';
+
+  // play only the active clip; pause the others to save resources
+  React.useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (active) {
+      v.currentTime = 0;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [active, clip.video]);
+
+  // react to mute toggle
+  React.useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted]);
 
   return (
     <div style={{
       height: '100%', width: '100%', scrollSnapAlign: 'start',
       position: 'relative', overflow: 'hidden',
     }}>
-      {/* media */}
-      <img src={clip.img} alt="" style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        objectFit: 'cover', transform: active ? 'scale(1.04)' : 'scale(1)',
-        transition: 'transform 8s linear',
-      }}/>
+      {/* media — video if provided, else still image */}
+      {clip.video ? (
+        <video
+          ref={videoRef}
+          src={clip.video}
+          poster={clip.img}
+          muted={muted}
+          loop
+          playsInline
+          preload="metadata"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      ) : (
+        <img src={clip.img} alt="" style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', transform: active ? 'scale(1.04)' : 'scale(1)',
+          transition: 'transform 8s linear',
+        }}/>
+      )}
 
       {/* gradients */}
       <div style={{

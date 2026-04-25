@@ -1,5 +1,11 @@
 // Main app shell — tabs, global state, prototype entry
 
+const flowBtn = {
+  width: '100%', padding: '7px 10px', textAlign: 'left',
+  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 6, cursor: 'pointer', color: '#F3EFE7', fontSize: 11.5, fontWeight: 500,
+};
+
 function App() {
   const [tab, setTab] = React.useState('watch');
   const [accentKey, setAccentKey] = React.useState('zattoo');
@@ -12,7 +18,30 @@ function App() {
   const [seriesItem, setSeriesItem] = React.useState(null);
   const [tweaksOpen, setTweaksOpen] = React.useState(false);
 
+  // ── FTE, subscription flow, personalisation, region ─────────────
+  const [fteOpen, setFteOpen] = React.useState(true);
+  const [subIntercept, setSubIntercept] = React.useState(false);
+  const [subChooser, setSubChooser] = React.useState(false);
+  const [signupPlan, setSignupPlan] = React.useState(null);
+  const [checkoutPlan, setCheckoutPlan] = React.useState(null);
+  const [personalised, setPersonalised] = React.useState(false);
+  const [consentOpen, setConsentOpen] = React.useState(false);
+  const [region, setRegion] = React.useState(REGIONS[0]);
+  const [regionOpen, setRegionOpen] = React.useState(false);
+  const [confirmMsg, setConfirmMsg] = React.useState(null);
+
   const accent = ACCENTS[accentKey];
+
+  // Guarded play-opener: if not subscribed, show subscribe sheet instead of opening player.
+  const guardedOpenPlayer = (item) => {
+    if (!subscribed) { setSubIntercept(true); return; }
+    setPlayerItem(item);
+  };
+  const guardedSetTrack = (t) => {
+    if (!subscribed) { setSubIntercept(true); return; }
+    setTrack(t);
+  };
+  const guardedOpenSeries = (s) => setSeriesItem(s); // browsing detail stays free
 
   // Edit-mode protocol
   React.useEffect(() => {
@@ -30,7 +59,7 @@ function App() {
     window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
   };
 
-  const onOpenPlayer = (item) => setPlayerItem(item);
+  const onOpenPlayer = guardedOpenPlayer;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#e8e4db', padding: 24, gap: 40 }}>
@@ -38,7 +67,17 @@ function App() {
         <div style={{ position: 'absolute', inset: 0, background: DARK.bg }}>
           {/* main tab content */}
           {tab === 'watch' && !feedOpen && (
-            <WatchPage accent={accent} onOpenFeed={() => setFeedOpen(true)} onOpenPlayer={onOpenPlayer} onOpenSeries={setSeriesItem}/>
+            <WatchPage
+              accent={accent}
+              subscribed={subscribed}
+              onOpenFeed={() => setFeedOpen(true)}
+              onOpenPlayer={onOpenPlayer}
+              onOpenSeries={guardedOpenSeries}
+              personalised={personalised}
+              onEnablePersonalisation={() => setConsentOpen(true)}
+              region={region}
+              onOpenRegion={() => setRegionOpen(true)}
+            />
           )}
           {tab === 'watch' && feedOpen && (
             <>
@@ -51,7 +90,7 @@ function App() {
             </>
           )}
           {tab === 'listen' && (
-            <ListenPage accent={accent} playing={track} setPlaying={setTrack}/>
+            <ListenPage accent={accent} playing={track} setPlaying={guardedSetTrack}/>
           )}
           {tab === 'read' && (
             <ReadPage subscribed={subscribed} setSubscribed={setSubscribed} onOpenArticle={setArticle}/>
@@ -61,20 +100,81 @@ function App() {
           )}
 
           {/* Status bar */}
-          {!feedOpen && !playerItem && !article && !seriesItem && (
+          {!feedOpen && !playerItem && !article && !seriesItem && !fteOpen && !subChooser && !signupPlan && !checkoutPlan && (
             <StatusBarOverlay dark={tab !== 'read'}/>
           )}
 
           {/* Mini player */}
           {tab === 'listen' && track && <MiniPlayer track={track} onStop={() => setTrack(null)} accent={accent}/>}
 
-          {/* Bottom nav — hide during player or clip-feed fullscreen or article or series detail */}
-          {!playerItem && !article && !feedOpen && !seriesItem && <BottomNav tab={tab} setTab={(t)=>{ setTab(t); if(t!=='watch') setFeedOpen(false);}} accent={accent}/>}
+          {/* Bottom nav — hide during player, feed, article, series, or any onboarding overlay */}
+          {!playerItem && !article && !feedOpen && !seriesItem && !fteOpen && !subChooser && !signupPlan && !checkoutPlan && <BottomNav tab={tab} setTab={(t)=>{ setTab(t); if(t!=='watch') setFeedOpen(false);}} accent={accent}/>}
 
           {/* Full-screen overlays */}
           {playerItem && <Player item={playerItem} onClose={() => setPlayerItem(null)} accent={accent}/>}
           {article && <ArticleView article={article} onClose={() => setArticle(null)} accent={accent}/>}
           {seriesItem && !playerItem && <SeriesDetail series={seriesItem} onClose={() => setSeriesItem(null)} onOpenPlayer={onOpenPlayer} accent={accent}/>}
+
+          {/* ── Onboarding, subscription, consent, region overlays ── */}
+          {fteOpen && (
+            <WelcomeScreen
+              accent={accent}
+              onExplore={() => setFteOpen(false)}
+              onStart={() => { setFteOpen(false); setSubChooser(true); }}
+            />
+          )}
+          {subIntercept && (
+            <SubscribeIntercept
+              accent={accent}
+              onClose={() => setSubIntercept(false)}
+              onChoose={() => { setSubIntercept(false); setSubChooser(true); }}
+            />
+          )}
+          {subChooser && (
+            <SubscribeChooser
+              accent={accent}
+              onClose={() => setSubChooser(false)}
+              onPick={(plan) => { setSubChooser(false); setSignupPlan(plan); }}
+            />
+          )}
+          {signupPlan && (
+            <SignupScreen
+              plan={signupPlan}
+              accent={accent}
+              onClose={() => setSignupPlan(null)}
+              onContinue={() => { setCheckoutPlan(signupPlan); setSignupPlan(null); }}
+            />
+          )}
+          {checkoutPlan && (
+            <CheckoutScreen
+              plan={checkoutPlan}
+              accent={accent}
+              onClose={() => setCheckoutPlan(null)}
+              onConfirm={() => {
+                setSubscribed(true);
+                setConfirmMsg(`${checkoutPlan.name} aktiv — 7 Tage gratis. Los geht's!`);
+                setCheckoutPlan(null);
+              }}
+            />
+          )}
+          {consentOpen && (
+            <ConsentModal
+              accent={accent}
+              onClose={() => setConsentOpen(false)}
+              onAccept={() => { setPersonalised(true); setConsentOpen(false); setConfirmMsg('Personalisierung aktiviert. Empfehlungen werden geladen.'); }}
+            />
+          )}
+          {regionOpen && (
+            <RegionSheet
+              current={region}
+              accent={accent}
+              onClose={() => setRegionOpen(false)}
+              onPick={(r) => { setRegion(r); setRegionOpen(false); }}
+            />
+          )}
+          {confirmMsg && (
+            <ConfirmBanner accent={accent} message={confirmMsg} onDismiss={() => setConfirmMsg(null)}/>
+          )}
         </div>
       </IOSDevice>
 
@@ -85,10 +185,10 @@ function App() {
           Tap through the flow.
         </div>
         <ul style={{ paddingLeft: 16, margin: 0, opacity: 0.75 }}>
-          <li>The 4You hero opens the clip feed</li>
-          <li>Swipe vertically through highlights</li>
-          <li>Any CTA or tile launches the player</li>
-          <li>Read tab toggles teaser ↔ subscribed</li>
+          <li>Welcome screen on first load — explore freely</li>
+          <li>Tap any play / stream → friendly subscribe sheet</li>
+          <li>Home: enable personalisation to show Continue Watching</li>
+          <li>Tap the region chip to switch Swiss regions</li>
         </ul>
         <a href="Zattoo Canvas.html" style={{
           display: 'inline-block', marginTop: 20, padding: '8px 14px',
@@ -144,6 +244,15 @@ function App() {
 
           <div style={{ marginTop: 14, fontSize: 10, opacity: 0.5, lineHeight: 1.4 }}>
             Toggle Tweaks in the toolbar to hide.
+          </div>
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '16px 0 14px' }}/>
+          <div style={{ fontSize: 10, opacity: 0.6, marginBottom: 8, fontWeight: 600, letterSpacing: 1 }}>FLOW STATE</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button onClick={() => { setFteOpen(true); setSubscribed(false); setPersonalised(false); }} style={flowBtn}>Replay welcome (FTE)</button>
+            <button onClick={() => setSubChooser(true)} style={flowBtn}>Open plan chooser</button>
+            <button onClick={() => setSubscribed(s => !s)} style={flowBtn}>Subscribed: {subscribed ? 'ON' : 'OFF'}</button>
+            <button onClick={() => setPersonalised(p => !p)} style={flowBtn}>Personalised: {personalised ? 'ON' : 'OFF'}</button>
           </div>
         </div>
       )}

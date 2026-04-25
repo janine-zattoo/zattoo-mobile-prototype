@@ -58,9 +58,18 @@ function LibraryPage({ accent, onOpenPlayer: onOpenPlayerRaw, onOpenArticle, set
     { id: 'r5', title: 'Wetten, dass..?',         channel: 'ZDF',              sub: 'Entertainment · 180 min', when: 'Last Saturday',     img: img('photo-1514525253161-7a46d19cd819', 400, 225), duration: 180, kind: 'VOD' },
   ];
 
+  // Downloads — offline content, mixed complete + in-progress
+  const downloads = [
+    { id: 'd1', title: 'The Swarm',               sub: 'S1 · E1 to E4',            size: '1.8 GB', duration: '4h 12m', img: img('photo-1518837695005-2083093ee35b', 400, 225), status: 'done' },
+    { id: 'd2', title: '12 Years a Slave',        sub: 'Movie · Director\'s cut',  size: '2.4 GB', duration: '2h 14m', img: window.__resources.pos_12years,  status: 'done' },
+    { id: 'd3', title: 'Bad Banks',               sub: 'S1 · E1 to E6',            size: '3.1 GB', duration: '5h 30m', img: img('photo-1526779259212-939e64788e3c', 400, 225), status: 'progress', progress: 0.64 },
+    { id: 'd4', title: 'Stadt Land Kunst',        sub: 'Culture · 3 episodes',     size: '980 MB', duration: '1h 30m', img: img('photo-1519125323398-675f0ddb6308', 400, 225), status: 'done' },
+    { id: 'd5', title: '127 Hours',               sub: 'Movie · HD',               size: '1.6 GB', duration: '1h 34m', img: window.__resources.pos_127hours,          status: 'queued' },
+  ];
+
   const counts = {
-    all: savedSeries.length + savedLive.length + recordings.length + savedPodcasts.length + savedStations.length + savedArticles.length + savedClips.length,
-    watch: savedSeries.length + savedLive.length + recordings.length + savedClips.length,
+    all: savedSeries.length + savedLive.length + recordings.length + downloads.length + savedPodcasts.length + savedStations.length + savedArticles.length + savedClips.length,
+    watch: savedSeries.length + savedLive.length + recordings.length + downloads.length + savedClips.length,
     listen: savedPodcasts.length + savedStations.length,
     read: savedArticles.length,
   };
@@ -238,6 +247,116 @@ function LibraryPage({ accent, onOpenPlayer: onOpenPlayerRaw, onOpenArticle, set
                 </svg>
               </button>
             ))}
+          </div>
+        </Cluster>
+      )}
+
+      {/* Downloads cluster — offline content */}
+      {show('watch') && downloads.length > 0 && (
+        <Cluster
+          label="Downloads"
+          count={downloads.length}
+          accent={accent}
+          trailing={<StorageMeter used={6.4} total={32} prefix="Offline"/>}
+        >
+          <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {downloads.map(d => {
+              const inProgress = d.status === 'progress';
+              const queued = d.status === 'queued';
+              const done = d.status === 'done';
+              return (
+                <button key={d.id} onClick={() => done && onOpenPlayer({ ...d, kind: 'VOD' })} style={{
+                  background: 'rgba(255,255,255,0.03)', border: '1px solid ' + DARK.hairline,
+                  borderRadius: 10, padding: 10, cursor: done ? 'pointer' : 'default',
+                  display: 'flex', gap: 12, alignItems: 'center', textAlign: 'left',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  {/* Progress fill behind content for in-progress items */}
+                  {inProgress && (
+                    <div style={{
+                      position: 'absolute', left: 0, top: 0, bottom: 0,
+                      width: `${d.progress * 100}%`, background: accent.solid,
+                      opacity: 0.08, pointerEvents: 'none',
+                    }}/>
+                  )}
+                  <div style={{
+                    width: 104, height: 64, borderRadius: 4, flexShrink: 0,
+                    backgroundImage: `url(${d.img})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                    position: 'relative',
+                    filter: queued ? 'grayscale(0.6) brightness(0.7)' : 'none',
+                  }}>
+                    {/* Status badge */}
+                    <div style={{
+                      position: 'absolute', top: 4, left: 4,
+                      display: 'flex', alignItems: 'center', gap: 3,
+                      background: done ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.65)',
+                      padding: '2px 5px', borderRadius: 2,
+                    }}>
+                      {done && (
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                          <path d="M1.5 6.5l2.5 2.5 6-6" stroke={accent.solid} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                      {inProgress && (
+                        <span style={{ width: 5, height: 5, borderRadius: 5, background: accent.solid, boxShadow: `0 0 4px ${accent.solid}` }}/>
+                      )}
+                      {queued && (
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#fff" strokeWidth="1.2"/><path d="M6 3.5v2.8l1.8 1" stroke="#fff" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      )}
+                      <span style={{ fontFamily: FONTS.ui, fontSize: 8, fontWeight: 700, color: '#fff', letterSpacing: 0.6 }}>
+                        {done ? 'OFFLINE' : inProgress ? `${Math.round(d.progress * 100)}%` : 'QUEUED'}
+                      </span>
+                    </div>
+                    {done && (
+                      <div style={{
+                        position: 'absolute', bottom: 4, right: 4,
+                        fontFamily: FONTS.mono, fontSize: 9, fontWeight: 600,
+                        color: '#fff', background: 'rgba(0,0,0,0.65)',
+                        padding: '1px 5px', borderRadius: 2,
+                      }}>{d.duration}</div>
+                    )}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: FONTS.ui, fontSize: 14, fontWeight: 600,
+                      color: DARK.text,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{d.title}</div>
+                    <div style={{ fontFamily: FONTS.ui, fontSize: 11, color: DARK.textMute, marginTop: 2 }}>
+                      {d.sub}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <span style={{
+                        fontFamily: FONTS.mono, fontSize: 10, fontWeight: 600,
+                        color: DARK.textDim, letterSpacing: 0.3,
+                      }}>{d.size}</span>
+                      {inProgress && (
+                        <div style={{
+                          flex: 1, maxWidth: 110, height: 3, borderRadius: 2,
+                          background: 'rgba(255,255,255,0.1)', overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            width: `${d.progress * 100}%`, height: '100%',
+                            background: accent.solid,
+                          }}/>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Right action icon */}
+                  {done ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                      <path d="M8 6l8 6-8 6" stroke={DARK.textMute} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }} fill="none">
+                      <circle cx="12" cy="12" r="9" stroke={DARK.textMute} strokeWidth="1.5"/>
+                      <path d="M9 9l6 6M15 9l-6 6" stroke={DARK.textMute} strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </Cluster>
       )}
@@ -508,7 +627,7 @@ function DropItem({ active, onClick, children }) {
   );
 }
 
-function StorageMeter({ used, total }) {
+function StorageMeter({ used, total, prefix }) {
   const pct = Math.min(1, used / total);
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -522,7 +641,7 @@ function StorageMeter({ used, total }) {
         fontFamily: FONTS.ui, fontSize: 10, letterSpacing: 0.4,
         fontWeight: 600, color: DARK.textMute,
         fontVariantNumeric: 'tabular-nums',
-      }}>{used} / {total} GB</div>
+      }}>{prefix ? `${prefix} · ` : ''}{used} / {total} GB</div>
     </div>
   );
 }
