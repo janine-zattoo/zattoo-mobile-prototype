@@ -7,6 +7,37 @@ function Player({ item, onClose, accent }) {
   const [showChannels, setShowChannels] = React.useState(false);
   const [showEPG, setShowEPG] = React.useState(false);
   const isLive = item?.kind === 'LIVE' || item?.viewers;
+  const videoRef = React.useRef(null);
+  const hlsRef   = React.useRef(null);
+
+  // Set up HLS stream when item has a streamUrl
+  React.useEffect(() => {
+    const video = videoRef.current;
+    const url   = item?.streamUrl;
+    if (!video || !url) return;
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = url;
+      video.play().catch(() => {});
+    } else if (window.Hls?.isSupported()) {
+      const hls = new window.Hls({ startLevel: -1, debug: false });
+      hlsRef.current = hls;
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+    }
+    return () => {
+      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+      if (video) { video.pause(); video.src = ''; }
+    };
+  }, [item?.streamUrl]);
+
+  // Sync play/pause state to video element
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !item?.streamUrl) return;
+    if (playing) video.play().catch(() => {});
+    else video.pause();
+  }, [playing]);
 
   React.useEffect(() => {
     if (!showChrome) return;
@@ -34,11 +65,19 @@ function Player({ item, onClose, accent }) {
       ...landscapeStyle, background: '#000', overflow: 'hidden',
     }}>
       {/* media */}
-      <img src={item.img} style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-        filter: showChrome ? 'brightness(0.75)' : 'brightness(1)',
-        transition: 'filter .3s',
-      }}/>
+      {item.streamUrl ? (
+        <video ref={videoRef} playsInline poster={item.img} style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+          filter: showChrome ? 'brightness(0.75)' : 'brightness(1)',
+          transition: 'filter .3s',
+        }}/>
+      ) : (
+        <img src={item.img} style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+          filter: showChrome ? 'brightness(0.75)' : 'brightness(1)',
+          transition: 'filter .3s',
+        }}/>
+      )}
 
       {/* TOP */}
       <div style={{

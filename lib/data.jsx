@@ -108,6 +108,11 @@ const CONTINUE = [
   { id: 'cw4', title: 'Babylon Berlin', sub: 'S5 · E7 · 25 min left', img: img('photo-1485579149621-3123dd979885', 500, 320), channel: 'ARD', progress: 0.52 },
 ];
 
+// Stream URLs keyed by MIP channel ID — add more as they become available
+const STREAM_URLS = {
+  'z-zdf-germany': 'https://fra3-9-hls7-live.zahs.tv/HD_zdf/m.m3u8?z32=MF2WI2LPL5RW6ZDFMNZT2YLBMMTGG43JMQ6TCOCBHE4TSQZXGU4TGNCEHAZEMLJRINBUKMZYIEZDOQZWGE3UEMRWEZZWSZZ5HBPTAMBXGA4GCYRYMQ4DQNBXGJRWGMTCGAZWGYRTGU2GCMJWGAYDSMRGON2WE5DJORWGK4Z5NBUWIZDFNYWXGZDIEZ2XGZLSL5UWIPLNNFYF6NJQMZSDGNDBGAWTKZBZGYWTIYLEMMWTSYJYGAWTGMDGMNRTSYLBHFTDAMRGOY6TA',
+};
+
 // MIP Live Data adapter — uses real EPG when window.MIP_LIVE_DATA is present
 function _mipFmt(ts) {
   const d = new Date(ts * 1000);
@@ -137,12 +142,14 @@ const LIVE_NOW = (() => {
       const trans = g.program.translations?.find(t => t.default) || g.program.translations?.[0] || {};
       const genre = g.program.genres?.[0] || g.program.kind || '';
       items.push({
-        id:      `mip_${items.length}`,
-        channel: ch.name,
-        title:   trans.title || '—',
-        sub:     `LIVE · ${_mipFmt(g.start)}–${_mipFmt(g.start + g.duration)}${genre ? ' · ' + genre : ''}`,
-        img:     g.program.image_url || img('photo-1459865264687-595d652de67e', 500, 320),
-        viewers: null,
+        id:        `mip_${items.length}`,
+        channel:   ch.name,
+        title:     trans.title || '—',
+        sub:       `LIVE · ${_mipFmt(g.start)}–${_mipFmt(g.start + g.duration)}${genre ? ' · ' + genre : ''}`,
+        img:       g.program.image_url || img('photo-1459865264687-595d652de67e', 500, 320),
+        viewers:   null,
+        streamUrl: STREAM_URLS[g.channel_id] || null,
+        kind:      'LIVE',
       });
       if (items.length >= 6) break;
     }
@@ -203,6 +210,28 @@ const CHANNEL_LOGOS = {
     `<text x="60" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#111">T</text>` +
     `<text x="90" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="20" fill="#FFF">L</text>`
   ),
+  // MIP channel logos — Wikimedia Commons direct SVG files (CORS: open, no thumbnail step restrictions)
+  'ZDF Germany':       'https://upload.wikimedia.org/wikipedia/commons/c/c1/ZDF_logo.svg',
+  'TF1':               'https://upload.wikimedia.org/wikipedia/commons/b/bc/Logo_TF1_2013.svg',
+  '3sat Germany':      'https://upload.wikimedia.org/wikipedia/commons/8/81/3sat_2019.svg',
+  'Das Erste Germany': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Das_Erste_HD_Logo_2015.svg',
+  'ARTE Germany':      'https://upload.wikimedia.org/wikipedia/commons/3/3b/Arte-Logo.svg',
+  'KiKA Germany':      'https://upload.wikimedia.org/wikipedia/commons/f/f5/Kika_2012.svg',
+  'ZDF Neo Germany':   'https://upload.wikimedia.org/wikipedia/commons/c/cc/ZDFneo_2017.svg',
+  'MTV Germany':       'https://upload.wikimedia.org/wikipedia/commons/6/68/MTV_2021_%28brand_version%29.svg',
+  'ORF 2 Austria':     'https://upload.wikimedia.org/wikipedia/commons/d/d6/ORF2_logo.svg',
+  'Comedy Central Germany': 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Comedy_Central_2018.svg',
+  'SRF 1 Switzerland': 'https://upload.wikimedia.org/wikipedia/commons/2/29/Logo_SRF_1.svg',
+  'SRF 2 Switzerland': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Logo_SRF_zwei.svg',
+  'BBC 1 UK':          'https://upload.wikimedia.org/wikipedia/commons/8/8b/BBC_One_logo_2021.svg',
+  'BBC 2 UK':          'https://upload.wikimedia.org/wikipedia/commons/1/15/BBC_Two_logo_2021.svg',
+  'BBC News':          'https://upload.wikimedia.org/wikipedia/commons/a/a2/BBC_News_2022_%28Alt%29.svg',
+  'Channel 4 UK':      'https://upload.wikimedia.org/wikipedia/en/9/9b/Channel_4_%28On_Demand%29_2023.svg',
+  'France 2':          'https://upload.wikimedia.org/wikipedia/commons/0/04/France_2_logo.svg',
+  'CNN International': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
+  'Rai 1 Italy':       'https://upload.wikimedia.org/wikipedia/commons/f/fa/Rai_1_-_Logo_2016.svg',
+  'WDR Germany (Köln)':'https://upload.wikimedia.org/wikipedia/commons/c/c1/WDR-Logo.svg',
+  'RTL':               'https://upload.wikimedia.org/wikipedia/commons/6/65/RTL_Logo_2021.svg',
 };
 
 // Auto-generate SVG badge logos for MIP channels not already hand-crafted above
