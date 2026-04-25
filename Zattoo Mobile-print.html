@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Zattoo · Mobile Prototype (Print)</title>
+  <style>
+    @page { size: A4 portrait; margin: 1.2cm; }
+    html, body { margin: 0; padding: 0; background: #e8e4db; font-family: -apple-system, system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    * { box-sizing: border-box; }
+    ::-webkit-scrollbar { display: none; }
+
+    .page {
+      width: 100%;
+      min-height: calc(100vh - 2.4cm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      padding: 20px 0;
+      break-after: page;
+      break-inside: avoid;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+    .page:last-child { break-after: auto; page-break-after: auto; }
+    .frame-wrap { break-inside: avoid; page-break-inside: avoid; }
+    .caption {
+      font-family: 'Times New Roman', Georgia, serif;
+      color: #1A1612;
+      text-align: center;
+      max-width: 520px;
+    }
+    .caption .eyebrow {
+      font-family: -apple-system, system-ui, sans-serif;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.55;
+      margin-bottom: 6px;
+    }
+    .caption .title {
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+      margin: 0 0 4px;
+    }
+    .caption .sub {
+      font-family: -apple-system, system-ui, sans-serif;
+      font-size: 12px;
+      opacity: 0.65;
+      line-height: 1.4;
+    }
+    .cover {
+      min-height: calc(100vh - 2.4cm);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+      break-after: page;
+      page-break-after: always;
+    }
+    .cover .z {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 72px;
+      font-style: italic;
+      font-weight: 700;
+      letter-spacing: -2px;
+      color: #1A1612;
+      margin: 0;
+    }
+    .cover .rule { width: 56px; height: 2px; background: #1A1612; margin: 10px 0; }
+    .cover .ti { font-family: -apple-system, system-ui, sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; color: #1A1612; }
+    .cover .desc {
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 22px; font-style: italic; max-width: 460px; line-height: 1.4; color: #1A1612; margin-top: 16px;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="lib/ios-frame.jsx"></script>
+  <script type="text/babel" src="lib/tokens.jsx"></script>
+  <script type="text/babel" src="lib/data.jsx"></script>
+  <script type="text/babel" src="lib/primitives.jsx"></script>
+  <script type="text/babel" src="lib/clip-feed.jsx"></script>
+  <script type="text/babel" src="lib/watch-page.jsx"></script>
+  <script type="text/babel" src="lib/listen-page.jsx"></script>
+  <script type="text/babel" src="lib/read-page.jsx"></script>
+  <script type="text/babel" src="lib/player.jsx"></script>
+
+  <script type="text/babel">
+    const accent = ACCENTS.zattoo;
+
+    function PhoneFrame({ children }) {
+      return (
+        <div className="frame-wrap">
+          <IOSDevice width={390} height={844} dark>
+            <div style={{ position: 'absolute', inset: 0, background: DARK.bg }}>
+              {children}
+            </div>
+          </IOSDevice>
+        </div>
+      );
+    }
+
+    function Caption({ eyebrow, title, sub }) {
+      return (
+        <div className="caption">
+          <div className="eyebrow">{eyebrow}</div>
+          <div className="title">{title}</div>
+          {sub && <div className="sub">{sub}</div>}
+        </div>
+      );
+    }
+
+    function Cover() {
+      return (
+        <div className="cover">
+          <div className="ti">Zattoo · Mobile</div>
+          <div className="rule"/>
+          <div className="z">Z</div>
+          <div className="rule"/>
+          <div className="ti">Prototype overview</div>
+          <div className="desc">A premium European streaming app — Watch, Listen, Read. Short-clip discovery as the hook, editorial carousels, and context-aware playback.</div>
+        </div>
+      );
+    }
+
+    // Small state holders so pages can render real components
+    function WatchShot() {
+      return <PhoneFrame><WatchPage accent={accent} onOpenFeed={()=>{}} onOpenPlayer={()=>{}}/><BottomNav tab="watch" setTab={()=>{}} accent={accent}/><StatusBarOverlay dark/></PhoneFrame>;
+    }
+    function ClipA() {
+      return <PhoneFrame><ClipFeed accent={accent} variant="overlay" onOpenPlayer={()=>{}}/></PhoneFrame>;
+    }
+    function ClipB() {
+      return <PhoneFrame><ClipFeed accent={accent} variant="docked" onOpenPlayer={()=>{}}/></PhoneFrame>;
+    }
+    function ClipC() {
+      return <PhoneFrame><ClipFeed accent={accent} variant="full-bleed" onOpenPlayer={()=>{}}/></PhoneFrame>;
+    }
+    function ListenShot() {
+      const [track, setTrack] = React.useState(null);
+      return <PhoneFrame><ListenPage accent={accent} playing={track} setPlaying={setTrack}/>{track && <MiniPlayer track={track} onStop={()=>setTrack(null)} accent={accent}/>}<BottomNav tab="listen" setTab={()=>{}} accent={accent}/><StatusBarOverlay dark/></PhoneFrame>;
+    }
+    function ReadTeaser() {
+      return <PhoneFrame><ReadPage subscribed={false} setSubscribed={()=>{}} onOpenArticle={()=>{}}/><BottomNav tab="read" setTab={()=>{}} accent={accent}/><StatusBarOverlay dark={false}/></PhoneFrame>;
+    }
+    function ReadSubscribed() {
+      return <PhoneFrame><ReadPage subscribed={true} setSubscribed={()=>{}} onOpenArticle={()=>{}}/><BottomNav tab="read" setTab={()=>{}} accent={accent}/><StatusBarOverlay dark={false}/></PhoneFrame>;
+    }
+    function PlayerLive() {
+      const live = (CLIPS.find(c => c.live) || CLIPS[0]);
+      return <PhoneFrame><Player item={{ ...live, kind:'live' }} onClose={()=>{}} accent={accent}/></PhoneFrame>;
+    }
+    function PlayerVOD() {
+      const vod = (CLIPS.find(c => !c.live) || CLIPS[0]);
+      return <PhoneFrame><Player item={{ ...vod, kind:'vod' }} onClose={()=>{}} accent={accent}/></PhoneFrame>;
+    }
+
+    function PrintDeck() {
+      return (
+        <>
+          <Cover/>
+          <div className="page"><WatchShot/><Caption eyebrow="01 · Watch" title="4You — editorial carousels" sub="Tap the hero to enter the clip feed. Each row has a themed header."/></div>
+          <div className="page"><ClipA/><Caption eyebrow="02 · Clip feed — Variant A" title="Overlay CTA" sub="CTA floats over the clip; content stays full-bleed."/></div>
+          <div className="page"><ClipB/><Caption eyebrow="03 · Clip feed — Variant B" title="Docked CTA" sub="Persistent CTA row docked above the nav — thumb-reachable."/></div>
+          <div className="page"><ClipC/><Caption eyebrow="04 · Clip feed — Variant C" title="Full-bleed poster" sub="Poster-first; metadata and CTA reveal on tap."/></div>
+          <div className="page"><ListenShot/><Caption eyebrow="05 · Listen" title="Stations, podcasts, mixes" sub="Dark cover-art grid with persistent mini-player."/></div>
+          <div className="page"><ReadTeaser/><Caption eyebrow="06 · Read — Teaser" title="Unsubscribed state" sub="Warm editorial paper; serif headlines, sans UI."/></div>
+          <div className="page"><ReadSubscribed/><Caption eyebrow="07 · Read — Subscribed" title="Full issue unlocked"/></div>
+          <div className="page"><PlayerLive/><Caption eyebrow="08 · Player · Live" title="Channel switcher, quality, subtitles" sub="Context-aware chrome for live broadcasts."/></div>
+          <div className="page"><PlayerVOD/><Caption eyebrow="09 · Player · VOD" title="Chapters + scrub" sub="On-demand chrome with chapter markers."/></div>
+        </>
+      );
+    }
+
+    const ROOT = document.getElementById('root');
+    ReactDOM.createRoot(ROOT).render(<PrintDeck/>);
+
+    // Auto-print once fonts + Babel + layout settle
+    (async () => {
+      try { await document.fonts.ready; } catch(_) {}
+      await new Promise(r => setTimeout(r, 800));
+      window.print();
+    })();
+  </script>
+</body>
+</html>

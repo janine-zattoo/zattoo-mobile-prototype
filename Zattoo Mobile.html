@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Zattoo · Mobile Prototype</title>
+  <script>
+    // Tweak defaults — persisted via edit-mode
+    window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "zattoo",
+      "clipVariant": "full-bleed"
+    }/*EDITMODE-END*/;
+  </script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #e8e4db; font-family: -apple-system, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    ::-webkit-scrollbar { display: none; }
+
+    /* Load Roboto as Compasse fallback via Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap');
+
+    /* Ken Burns hover — 8s slow zoom+pan to evoke streaming content.
+       Applies to image-bearing surfaces on Watch + Listen screens only. */
+    @keyframes zt-kenburns {
+      0%   { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.12) translate(-1.5%, -1.5%); }
+    }
+    .zt-streamable {
+      overflow: hidden;
+      position: relative;
+    }
+    .zt-streamable > img,
+    .zt-streamable::before {
+      transition: transform .35s ease-out;
+    }
+    .zt-streamable:hover img {
+      animation: zt-kenburns 8s ease-out forwards;
+    }
+    /* For divs using background-image, we clone via a pseudo-layer */
+    .zt-bg { background-size: cover; background-position: center; transition: transform .35s ease-out; }
+    .zt-streamable:hover .zt-bg {
+      animation: zt-kenburns 8s ease-out forwards;
+    }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="lib/ios-frame.jsx"></script>
+  <script type="text/babel" src="lib/tokens.jsx"></script>
+  <script type="text/babel" src="lib/data.jsx"></script>
+  <script type="text/babel" src="lib/primitives.jsx"></script>
+  <script type="text/babel" src="lib/clip-feed.jsx"></script>
+  <script type="text/babel" src="lib/watch-page.jsx"></script>
+  <script type="text/babel" src="lib/listen-page.jsx"></script>
+  <script type="text/babel" src="lib/read-page.jsx"></script>
+  <script type="text/babel" src="lib/library-page.jsx"></script>
+  <script type="text/babel" src="lib/player.jsx"></script>
+  <script type="text/babel" src="lib/series-detail.jsx"></script>
+  <script type="text/babel" src="lib/app.jsx"></script>
+</body>
+</html>
