@@ -69,6 +69,16 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    // Build window.__resources from ext-resource-dependency meta tags.
+    // In the Claude Design bundler these are blob URLs; here we use file paths.
+    window.__resources = window.__resources || {};
+    document.querySelectorAll('meta[name="ext-resource-dependency"]').forEach(function(m) {
+      var id = m.getAttribute('data-resource-id');
+      var path = m.getAttribute('content');
+      if (id && path && !window.__resources[id]) window.__resources[id] = path;
+    });
+  </script>
   <script src="lib/mip-live-data.js"></script>
   <script type="text/babel" src="lib/ios-frame.jsx"></script>
   <script type="text/babel" src="lib/tokens.jsx"></script>
