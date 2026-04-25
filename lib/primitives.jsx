@@ -206,7 +206,8 @@ function ChannelChip({ logo, color, size = 28, radius = 6 }) {
 
 // ─── Avatar button + Account side menu ──────────────────────────────
 // Lives in Watch/Listen/Read/Library headers.
-const AVATAR_IMG = `https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&h=200&q=80`;
+const AVATAR_IMG_URL = `https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&h=200&q=80`;
+const AVATAR_IMG = (typeof window !== 'undefined' && window.__urlMap && window.__urlMap[AVATAR_IMG_URL]) || AVATAR_IMG_URL;
 
 function AvatarButton({ accent, onClick, dark = true, size = 40 }) {
   const ringBg = dark ? DARK.bg : PAPER.bg;

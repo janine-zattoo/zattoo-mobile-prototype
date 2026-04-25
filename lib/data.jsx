@@ -1,8 +1,10 @@
 // Content: clips, carousels, stations, podcasts, articles.
 // Imagery comes from Unsplash (signed URLs, small sizes).
 
-const img = (id, w = 800, h = 1200) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=75`;
+const img = (id, w = 800, h = 1200) => {
+  const u = `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=75`;
+  return (typeof window !== 'undefined' && window.__urlMap && window.__urlMap[u]) || u;
+};
 
 // Vertical highlight clips — 9:16 content
 const CLIPS = [
@@ -164,12 +166,14 @@ const CHANNEL_LOGOS = {
   ),
 };
 
+const _p = (path) => (typeof window !== 'undefined' && window.__urlMap && window.__urlMap[path]) || path;
+
 const TRENDING = [
-  { id: 't1', title: '10,000 BC',       sub: 'Film · Epic adventure',       img: 'assets/posters/10000bc.jpg',        kind: 'movie', year: 2008, rating: 'FSK 12', genres: ['Adventure', 'Action'],    duration: 109 },
-  { id: 't2', title: '12 Jours',        sub: 'Film · Documentary',          img: 'assets/posters/12-jours.jpg',       kind: 'movie', year: 2017, rating: 'FSK 12', genres: ['Documentary', 'French'],  duration: 87  },
-  { id: 't3', title: '12 Years a Slave',sub: 'Film · Historical drama',     img: 'assets/posters/12-years-a-slave.jpg', kind: 'movie', year: 2013, rating: 'FSK 16', genres: ['Drama', 'Biography'],    duration: 134 },
-  { id: 't4', title: '127 Hours',       sub: 'Film · Survival drama',       img: 'assets/posters/127-hours.jpg',      kind: 'movie', year: 2010, rating: 'FSK 12', genres: ['Survival', 'Drama'],      duration: 94  },
-  { id: 't5', title: 'À la vie',        sub: 'Film · French drama',         img: 'assets/posters/a-la-vie.jpg',       kind: 'movie', year: 2014, rating: 'FSK 6',  genres: ['Drama', 'French'],        duration: 104 },
+  { id: 't1', title: '10,000 BC',       sub: 'Film · Epic adventure',       img: _p('assets/posters/10000bc.jpg'),        kind: 'movie', year: 2008, rating: 'FSK 12', genres: ['Adventure', 'Action'],    duration: 109 },
+  { id: 't2', title: '12 Jours',        sub: 'Film · Documentary',          img: _p('assets/posters/12-jours.jpg'),       kind: 'movie', year: 2017, rating: 'FSK 12', genres: ['Documentary', 'French'],  duration: 87  },
+  { id: 't3', title: '12 Years a Slave',sub: 'Film · Historical drama',     img: _p('assets/posters/12-years-a-slave.jpg'), kind: 'movie', year: 2013, rating: 'FSK 16', genres: ['Drama', 'Biography'],    duration: 134 },
+  { id: 't4', title: '127 Hours',       sub: 'Film · Survival drama',       img: _p('assets/posters/127-hours.jpg'),      kind: 'movie', year: 2010, rating: 'FSK 12', genres: ['Survival', 'Drama'],      duration: 94  },
+  { id: 't5', title: 'À la vie',        sub: 'Film · French drama',         img: _p('assets/posters/a-la-vie.jpg'),       kind: 'movie', year: 2014, rating: 'FSK 6',  genres: ['Drama', 'French'],        duration: 104 },
 ];
 
 // Per-title series detail overrides. Anything missing falls back to generated defaults.
@@ -305,7 +309,7 @@ const ARTICLES = [
     dek: 'How a three-character typo in a housing database displaced a family of four, and what it reveals about the governance of homes.',
     author: 'Adrien Baumann',
     readTime: '18 min',
-    img: img('photo-1520637836862-4d197d17c97a', 900, 1100),
+    img: img('photo-1504711434969-e33886168f5c', 900, 1100),
     section: 'SOCIETY',
     gated: true,
   },
