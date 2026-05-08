@@ -11,6 +11,7 @@ const ACCENTS = {
     soft: 'rgba(255, 95, 31, 0.14)',
     text: '#FFB896',
     glow: 'rgba(255, 95, 31, 0.45)',
+    onSolid: '#FFFFFF',
   },
   alpine: {
     name: 'Alpine Ice',
@@ -20,6 +21,7 @@ const ACCENTS = {
     soft: 'rgba(111, 183, 232, 0.16)',
     text: '#BCDFF3',
     glow: 'rgba(111, 183, 232, 0.45)',
+    onSolid: '#0A0A0C',
   },
   crimson: {
     name: 'Rotkäppchen',
@@ -29,6 +31,7 @@ const ACCENTS = {
     soft: 'rgba(229, 23, 63, 0.14)',
     text: '#F3A8B7',
     glow: 'rgba(229, 23, 63, 0.45)',
+    onSolid: '#FFFFFF',
   },
   electric: {
     name: 'Neon Chartreuse',
@@ -38,6 +41,8 @@ const ACCENTS = {
     soft: 'rgba(212, 255, 58, 0.18)',
     text: '#E6FF8C',
     glow: 'rgba(212, 255, 58, 0.5)',
+    // Dark ink for WCAG AAA contrast on the bright chartreuse fill (~17:1)
+    onSolid: '#0A0A0C',
   },
 };
 
