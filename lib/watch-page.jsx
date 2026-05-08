@@ -44,46 +44,14 @@ function WatchPage({ accent, subscribed, onOpenFeed, onOpenPlayer: onOpenPlayerR
 
       {menuOpen && <AccountMenu accent={accent} onClose={() => setMenuOpen(false)} />}
 
-      {/* Clip Feed Hero — big tappable entry, loops the first clip's video */}
-      <div onClick={onOpenFeed} className="zt-streamable" style={{
-        marginBottom: 20, aspectRatio: '1 / 1', overflow: 'hidden',
-        position: 'relative', cursor: 'pointer', background: '#000'
-      }}>
-        {CLIPS[0].video ?
-        <video
-          src={CLIPS[0].video}
-          poster={CLIPS[0].img}
-          muted
-          loop
-          autoPlay
-          playsInline
-          preload="metadata"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> :
-
-
-        <img src={CLIPS[0].img} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        }
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.75) 100%)' }} />
-        <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 6 }}>
-          <GlassPill dark>Kurzclips · 4 neu</GlassPill>
-        </div>
-        <div style={{ position: 'absolute', top: 14, right: 14 }}>
-          <div style={{
-            padding: '6px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.14)',
-            backdropFilter: 'blur(12px)', fontSize: 11, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase'
-          }}>▶ Clip feed · {CLIPS.length} new</div>
-        </div>
-        <div style={{ position: 'absolute', left: 16, right: 16, bottom: 16 }}>
-          <div style={{ fontFamily: FONTS.display, fontSize: 22, fontWeight: 400, lineHeight: 1.15, letterSpacing: -0.3, marginBottom: 8, textWrap: 'balance' }}>
-            Swipe to explore today's highlights
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {CLIPS.map((_, i) =>
-            <div key={i} style={{ flex: 1, height: 2, borderRadius: 2, background: i === 0 ? accent.solid : 'rgba(255,255,255,0.22)' }} />
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Clip Feed Hero — auto-rotating video carousel of today's highlights.
+          Cycles through every CLIP on a timer; tap opens the SAME clip fullscreen. */}
+      <HighlightsHero
+        clips={CLIPS}
+        accent={accent}
+        onOpenFeed={onOpenFeed}
+        onOpenPlayer={onOpenPlayerRaw}
+      />
 
       {/* Live channel stories — Instagram-style ring row */}
       <div style={{
@@ -448,6 +416,135 @@ function ThemeCard({ theme, accent, onOpenPlayer }) {
       </div>
     </div>);
 
+}
+
+// ─── Highlights hero ─────────────────────────────────────────────────
+// Auto-rotating video carousel for "today's highlights".
+// - Cycles through every clip on a timer (advances when video ends or
+//   after AUTO_ADVANCE_MS, whichever comes first).
+// - Tap = open the *currently visible* clip in fullscreen player.
+// - Progress bar at the bottom tracks playback position of the active clip.
+function HighlightsHero({ clips, accent, onOpenFeed, onOpenPlayer }) {
+  const AUTO_ADVANCE_MS = 8000; // hard cap so still images / long clips still rotate
+  const [active, setActive] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
+  const videoRef = React.useRef(null);
+  const timerRef = React.useRef(null);
+
+  const current = clips[active];
+  const next = (i) => setActive((i + 1) % clips.length);
+
+  // Hard timeout — guarantees rotation even if a video stalls or a clip is image-only.
+  React.useEffect(() => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => next(active), AUTO_ADVANCE_MS);
+    return () => clearTimeout(timerRef.current);
+  }, [active]);
+
+  // Video lifecycle for the active clip
+  React.useEffect(() => {
+    setProgress(0);
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = 0;
+    const onTime = () => {
+      if (v.duration) setProgress(Math.min(1, v.currentTime / v.duration));
+    };
+    const onEnded = () => next(active);
+    v.addEventListener('timeupdate', onTime);
+    v.addEventListener('ended', onEnded);
+    v.play().catch(() => {});
+    return () => {
+      v.removeEventListener('timeupdate', onTime);
+      v.removeEventListener('ended', onEnded);
+    };
+  }, [active]);
+
+  // Tap behaviour: open the active clip fullscreen.
+  // Pass `streamUrl` so the player renders a <video> (its existing contract);
+  // also flip orientation to portrait since these are 9:16 vertical clips.
+  const handleTap = () => {
+    if (!onOpenPlayer) return onOpenFeed && onOpenFeed();
+    onOpenPlayer({
+      ...current,
+      kind: 'CLIP',
+      orientation: 'portrait',
+      streamUrl: current.video,
+    });
+  };
+
+  return (
+    <div onClick={handleTap} className="zt-streamable" style={{
+      marginBottom: 20, aspectRatio: '1 / 1', overflow: 'hidden',
+      position: 'relative', cursor: 'pointer', background: '#000'
+    }}>
+      {current.video ? (
+        <video
+          ref={videoRef}
+          key={current.id}
+          src={current.video}
+          poster={current.img}
+          muted
+          autoPlay
+          playsInline
+          preload="auto"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <img src={current.img} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      )}
+
+      {/* darkening gradient for legibility */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 55%, rgba(0,0,0,0.78) 100%)' }} />
+
+      {/* top-left: channel chip with logo dot */}
+      <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', gap: 6 }}>
+        <GlassPill dark>
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: 4,
+            background: current.channelColor || accent.solid, marginRight: 6,
+            verticalAlign: 'middle'
+          }}/>
+          {current.channel}
+        </GlassPill>
+      </div>
+
+      {/* top-right: clip-feed entry pill */}
+      <div style={{ position: 'absolute', top: 14, right: 14 }}>
+        <div style={{
+          padding: '6px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.14)',
+          backdropFilter: 'blur(12px)', fontSize: 11, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase'
+        }}>▶ {active + 1} / {clips.length}</div>
+      </div>
+
+      {/* bottom: title + segmented progress */}
+      <div style={{ position: 'absolute', left: 16, right: 16, bottom: 16 }}>
+        <div style={{
+          fontSize: 10, letterSpacing: 2.2, textTransform: 'uppercase',
+          opacity: 0.75, fontWeight: 700, marginBottom: 6, color: '#fff'
+        }}>Today's highlights</div>
+        <div style={{
+          fontFamily: FONTS.display, fontSize: 22, fontWeight: 400, lineHeight: 1.15,
+          letterSpacing: -0.3, marginBottom: 12, textWrap: 'balance', color: '#fff',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+        }}>{current.title}</div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {clips.map((_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 2, borderRadius: 2, overflow: 'hidden',
+              background: 'rgba(255,255,255,0.22)'
+            }}>
+              <div style={{
+                width: i < active ? '100%' : i === active ? `${progress * 100}%` : '0%',
+                height: '100%', background: accent.solid,
+                transition: i === active ? 'width 0.2s linear' : 'none'
+              }}/>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Side sheet: Account menu now lives in lib/primitives.jsx as shared ───

@@ -200,7 +200,7 @@ function WelcomeScreen({ accent, onExplore, onStart }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
           <button onClick={onStart} style={{
             width: '100%', height: 46, borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: accent.solid, color: '#fff',
+            background: accent.solid, color: accent.onSolid || '#fff',
             fontFamily: FONTS.ui, fontSize: 14, fontWeight: 700, letterSpacing: 0.2,
             boxShadow: `0 10px 30px ${accent.glow}`
           }}>Kostenlos testen · 1 Woche gratis</button>
@@ -261,7 +261,7 @@ function SubscribeIntercept({ accent, onClose, onChoose }) {
 
         <button onClick={onChoose} style={{
           marginTop: 22, width: '100%', height: 52, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: accent.solid, color: '#fff',
+          background: accent.solid, color: accent.onSolid || '#fff',
           fontFamily: FONTS.ui, fontSize: 15, fontWeight: 700, letterSpacing: 0.2,
           boxShadow: `0 8px 24px ${accent.glow}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
@@ -312,7 +312,7 @@ function SubscribeChooser({ accent, onClose, onPick }) {
                 {p.recommended &&
                 <div style={{
                   position: 'absolute', top: -10, left: 16,
-                  background: accent.solid, color: '#fff',
+                  background: accent.solid, color: accent.onSolid || '#fff',
                   fontSize: 10, fontWeight: 700, letterSpacing: 1.4, textTransform: 'uppercase',
                   padding: '4px 10px', borderRadius: 4
                 }}>Beliebt</div>
@@ -359,7 +359,7 @@ function SubscribeChooser({ accent, onClose, onPick }) {
 
         <button onClick={() => onPick(PLANS.find((p) => p.id === selected))} style={{
           marginTop: 22, width: '100%', height: 54, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: accent.solid, color: '#fff',
+          background: accent.solid, color: accent.onSolid || '#fff',
           fontFamily: FONTS.ui, fontSize: 15, fontWeight: 700, letterSpacing: 0.2,
           boxShadow: `0 10px 30px ${accent.glow}`
         }}>
@@ -556,7 +556,7 @@ function CheckoutScreen({ plan, accent, onClose, onConfirm }) {
 
         <button onClick={onConfirm} style={{
           marginTop: 28, width: '100%', height: 54, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: accent.solid, color: '#fff',
+          background: accent.solid, color: accent.onSolid || '#fff',
           fontFamily: FONTS.ui, fontSize: 15, fontWeight: 700, letterSpacing: 0.2,
           boxShadow: `0 10px 30px ${accent.glow}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
@@ -624,7 +624,7 @@ function ConsentModal({ accent, onClose, onAccept }) {
           }}>Nicht jetzt</button>
           <button onClick={onAccept} style={{
             flex: 1.4, height: 48, borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: accent.solid, color: '#fff',
+            background: accent.solid, color: accent.onSolid || '#fff',
             fontFamily: FONTS.ui, fontSize: 14, fontWeight: 700, letterSpacing: 0.2,
             boxShadow: `0 8px 24px ${accent.glow}`
           }}>Aktivieren</button>
@@ -674,7 +674,7 @@ function PersonalisationGate({ accent, onEnable }) {
 
         <button onClick={onEnable} style={{
           marginTop: 16, padding: '11px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-          background: accent.solid, color: '#fff',
+          background: accent.solid, color: accent.onSolid || '#fff',
           fontFamily: FONTS.ui, fontSize: 13, fontWeight: 700, letterSpacing: 0.2,
           display: 'inline-flex', alignItems: 'center', gap: 8,
           boxShadow: `0 6px 18px ${accent.glow}`,

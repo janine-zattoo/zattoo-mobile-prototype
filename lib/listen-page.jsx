@@ -96,7 +96,7 @@ function ListenPage({ accent, playing, setPlaying }) {
                 <div style={{ fontFamily: FONTS.display, fontSize: 15, fontWeight: 500, lineHeight: 1.15, textWrap: 'balance' }}>{p.title}</div>
               </div>
               {p.new && (
-                <div style={{ position: 'absolute', top: 8, right: 8, background: accent.solid, color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
+                <div style={{ position: 'absolute', top: 8, right: 8, background: accent.solid, color: accent.onSolid || '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
                   {p.new} NEW
                 </div>
               )}

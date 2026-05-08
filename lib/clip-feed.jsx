@@ -235,7 +235,7 @@ function OverlayMeta({ clip, accent, onOpenPlayer }) {
 
       <button onClick={onOpenPlayer} style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        background: accent.solid, color: '#fff', border: 'none', cursor: 'pointer',
+        background: accent.solid, color: accent.onSolid || '#fff', border: 'none', cursor: 'pointer',
         padding: '12px 18px', borderRadius: 10,
         fontFamily: FONTS.ui, fontSize: 14, fontWeight: 600, letterSpacing: 0.1,
         boxShadow: `0 6px 20px ${accent.glow}, 0 1px 0 rgba(255,255,255,0.2) inset`,
@@ -270,7 +270,7 @@ function DockedMeta({ clip, accent, onOpenPlayer }) {
       }}>
         <button onClick={onOpenPlayer} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: accent.solid, color: '#fff', border: 'none', cursor: 'pointer',
+          background: accent.solid, color: accent.onSolid || '#fff', border: 'none', cursor: 'pointer',
           padding: '14px 20px', borderRadius: 12,
           fontFamily: FONTS.ui, fontSize: 15, fontWeight: 600, letterSpacing: 0.1,
           boxShadow: `0 8px 24px ${accent.glow}`,
